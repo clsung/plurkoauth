@@ -5,6 +5,7 @@
  * A demo PHP Library supporting Plurk OAuth API
  */
 require('config.php');
+require('OAuth.php');
 
 define('PLURK_ACCESS_TOKEN_URL', "http://www.plurk.com/OAuth/access_token");
 define('PLURK_AUTHORIZE_URL', "http://www.plurk.com/OAuth/authorize");
@@ -18,30 +19,22 @@ class PlurkOAuth {
     protected $request_token;
     protected $access_token;
     protected $verifier;
+    protected $sign_method;
     protected $params;
     protected $consumer_key;
+    protected $consumer;
+    protected $client;
 
     function __construct($consumer_key, $consumer_secret,
 	$access_token = NULL, $access_secret = NULL) {
+	$this->consumer = new Consumer($consumer_key, $consumer_secret);
 	$this->consumer_key = $consumer_key;
 	$this->consumer_secret = $consumer_secret;
-	$this->params = array (
-	    'consumer_key' => $consumer_key, 
-	    'consumer_secret' => $consumer_secret,
-	    'signature_methods'     => array('HMAC-SHA1')
-	);
+	$this->sign_method = new SignatureMethod_HMAC_SHA1();
+	$this->params = array();
 	if (!empty($access_token) && !empty($access_secret)) {
 	    $this->authorize($access_token, $access_secret);
 	}
-    }
-
-    function twoLegOAuth() {
-	OAuthStore::instance("2Leg", $this->params);
-    }
-
-    function threeLegOAuth() {
-	$store = OAuthStore::instance("Session", $this->params);
-	$store->addServerToken('', '', $this->access_token['oauth_token'], $this->access_token['oauth_token_secret'], null, null);
     }
 
     function authorize($access_token = NULL, $access_secret = NULL) {
@@ -53,7 +46,6 @@ class PlurkOAuth {
 	    $this->params['request_token_uri'] = PLURK_REQUEST_TOKEN_URL;
 	    $this->params['authorize_uri'] = PLURK_AUTHORIZE_URL;
 	    $this->params['access_token_uri'] = PLURK_ACCESS_TOKEN_URL;
-	    $this->threeLegOAuth();
 	    try {
 		$response =
 		    OAuthRequester::requestRequestToken($this->consumer_key,
@@ -99,28 +91,39 @@ class PlurkOAuth {
 	}
     }
 
-    function twoLeggedRequest($path, $params = NULL, $content = NULL) {
-	$this->twoLegOAuth();
-	return $this->request($path, $params, $content);
-    }
-
-    function threeLeggedRequest($path, $params = NULL, $content = NULL) {
-	$this->threeLegOAuth();
-	return $this->request($path, $params, $content);
-    }
-
     function request($path, $params, $content) {
 	if (isset($params)) 
 	    $params = array_merge ($params, $this->params);
-	else 
+	else
 	    $params = $this->params;
-	$request = new OAuthRequester($this->baseURL.$path,
-	    'POST', $params, $content);
+	if (isset ($this->access_token))
+	    $this->token = new Token(
+		$this->access_token['oauth_token'], 
+		$this->access_token['oauth_token_secret']); 
+	else
+	    unset($this->token);
+	$client = new Client($this->consumer, $this->token);
+
 	$this->status = 0;
 	$this->response['reason'] = null;
 	try {
-	    $this->response = $request->doRequest();
-	} catch (OAuthException2 $e) {
+	    if (isset($content) and is_array($content)) {
+		$content_params = array();
+		foreach ($content as $key => $value) {
+		    $content_params[] = 
+			sprintf('%s=%s', rawurlencode($key), rawurlencode($value));
+		}
+		$content = implode('&', $content_params);
+	    }
+	    $resp = json_decode($client->request(
+		$this->baseURL.$path, "POST", /*$request->to_header()*/null, $content));
+	    if (isset($resp->error_text)) {
+		$this->status = -1;
+		$this->response['body'] = null;
+		$this->response['reason'] = $resp->error_text;
+	    } else
+		$this->response['body'] = $resp;
+	} catch (PlurkOAuthException $e) {
 	    $this->status = -1;
 	    $this->response['reason'] = $e->getMessage();
 	}

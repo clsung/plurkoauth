@@ -30,7 +30,6 @@ class PlurkAPITest extends PHPUnit_Framework_TestCase {
 
     public function testInvalidConsumerKey()  
     {  
-	$this->markTestSkipped("Due to oauth-php session incomplete, we need to skip it");
 	$plurk = new PlurkAPI("abc", "def");  
 	$json = $plurk->callAPI('/APP/Profile/getPublicProfile',
 	    array('user_id' => 'clsung'), true);
@@ -51,7 +50,6 @@ class PlurkAPITest extends PHPUnit_Framework_TestCase {
      */
     public function testGetOwnProfile()
     {
-	$this->markTestSkipped("Due to oauth-php session incomplete, we need to skip it");
 	$plurk = new PlurkAPI($this->consumer_key, $this->consumer_secret, 
 	    $this->oauth_token, $this->oauth_token_secret
 	);  
