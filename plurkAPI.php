@@ -26,12 +26,8 @@ class PlurkAPI {
 	);
     }
    
-    function callAPI($path, $params_array = null, $twolegged = false) {
-	if ($twolegged) {
-	    $this->_error = $this->_oauth->twoLeggedRequest($path, $params_array);
-	} else {
-	    $this->_error = $this->_oauth->threeLeggedRequest($path, $params_array);
-	}
+    function callAPI($path, $params_array = null) {
+	$this->_error = $this->_oauth->request($path, null, $params_array);
 	return $this->_error['content'];
     }
 
