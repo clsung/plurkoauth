@@ -1,6 +1,7 @@
 <?
 
 require('plurkAPI.php');
+require('config.php');
 
 class PlurkAPITest extends PHPUnit_Framework_TestCase {
    
@@ -11,10 +12,10 @@ class PlurkAPITest extends PHPUnit_Framework_TestCase {
     protected $plurk;
 
     public function setUp(){
-	$this->consumer_key = 'YOUR_CONSUMER_KEY';
-	$this->consumer_secret = 'YOUR_CONSUMER_SECRET';
-	$this->oauth_token = 'YOUR_ACCESS_TOKEN';
-	$this->oauth_token_secret = 'YOUR_ACCESS_TOKEN_SECRET';
+	$this->consumer_key = CONSUMER_KEY;
+	$this->consumer_secret = CONSUMER_SECRET;
+	$this->oauth_token = ACCESS_TOKEN;
+	$this->oauth_token_secret = ACCESS_TOKEN_SECRET;
     } 
 
     public function tearDown(){}
