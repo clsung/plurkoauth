@@ -1,0 +1,6 @@
+
+0.2.0
+- use own OAuth.php, remove oauth-php 
+
+0.1.0
+- first release, use oauth-php
