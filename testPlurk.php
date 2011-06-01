@@ -1,7 +1,6 @@
 <?
 
 require('plurkAPI.php');
-require('config.php');
 
 class PlurkAPITest extends PHPUnit_Framework_TestCase {
    
@@ -58,4 +57,13 @@ class PlurkAPITest extends PHPUnit_Framework_TestCase {
 	$this->assertEquals(0, $plurk->errno());
     }
 
+    /**
+     * @depends testValidConsumerKey
+     */
+    public function testGetAccessToken()
+    {
+	$this->markTestIncomplete("Only when you need to get access token");
+	$oauth = new PlurkOAuth($this->consumer_key, $this->consumer_secret);
+	$this->assertTrue($oauth->authorize());
+    }
 }  

@@ -21,11 +21,10 @@ Example
 ``` php
 require('plurkAPI.php');
 
-$plurk = new PlurkAPI(CONSUMER_KEY, CONSUMER_SECRET,
-    ACCESS_TOKEN, ACCESS_TOKEN_SECRET);
+$plurk = new PlurkAPI(CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET);
 $json = $plurk->callAPI('/APP/Profile/getPublicProfile', array('user_id' => 'clsung'), true);
 $json = $plurk->callAPI('/APP/Profile/getOwnProfile');
 $json = $plurk->callAPI('/APP/FriendsFans/getFriendsByOffset', array ('user_id' => 'clsung'));
-#$json = $plurk->callAPI('/APP/Timeline/getPlurks');
+//$json = $plurk->callAPI('/APP/Timeline/getPlurks');
 //$json = $plurk->callAPI('/APP/Timeline/plurkAdd', array ('content' => 'Post by plurkoauth which based on oauth-php', 'qualifier' => 'hates'));
 ```

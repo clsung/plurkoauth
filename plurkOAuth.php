@@ -7,9 +7,9 @@
 require('config.php');
 require('OAuth.php');
 
-define('PLURK_ACCESS_TOKEN_URL', "http://www.plurk.com/OAuth/access_token");
-define('PLURK_AUTHORIZE_URL', "http://www.plurk.com/OAuth/authorize");
-define('PLURK_REQUEST_TOKEN_URL', "http://www.plurk.com/OAuth/request_token");
+define('PLURK_ACCESS_TOKEN_PATH', "/OAuth/access_token");
+define('PLURK_AUTHORIZE_PATH', "/OAuth/authorize");
+define('PLURK_REQUEST_TOKEN_PATH', "/OAuth/request_token");
 
 class PlurkOAuth {
 
@@ -21,15 +21,12 @@ class PlurkOAuth {
     protected $verifier;
     protected $sign_method;
     protected $params;
-    protected $consumer_key;
     protected $consumer;
     protected $client;
 
     function __construct($consumer_key, $consumer_secret,
 	$access_token = NULL, $access_secret = NULL) {
 	$this->consumer = new Consumer($consumer_key, $consumer_secret);
-	$this->consumer_key = $consumer_key;
-	$this->consumer_secret = $consumer_secret;
 	$this->sign_method = new SignatureMethod_HMAC_SHA1();
 	$this->params = array();
 	if (!empty($access_token) && !empty($access_secret)) {
@@ -37,61 +34,55 @@ class PlurkOAuth {
 	}
     }
 
+    function _get_request_token() {
+	$content = $this->request(PLURK_REQUEST_TOKEN_PATH);
+	parse_str($content['content'], $this->request_token);
+    }
+
+    function _get_verifier() {
+	printf ("Access the following URL to get authorized: \n");
+	printf ("%s?oauth_token=%s\n", $this->baseURL.PLURK_AUTHORIZE_PATH,
+	    $this->request_token['oauth_token']);
+	$handle = fopen ("php://stdin","r");
+	$yes_no = "n";
+	while (!strncmp($yes_no, "n", 1)) {
+	    printf("Input the verification number: ");
+	    $this->verifier = trim(fgets($handle));
+	    printf("Are you sure? (y/N) ");
+	    $yes_no = trim(fgets($handle));
+	    if (strncmp($yes_no, "y", 1)) $yes_no = "n";
+	}
+	fclose($handle);
+    }
+
+    function _get_access_token() {
+	$content = $this->request(PLURK_REQUEST_TOKEN_PATH, array (
+	    'oauth_token_secret' => $this->request_token['oauth_token_secret'],
+	    'oauth_verifier' => $this->verifier,)
+	);
+	parse_str($content['content'], $this->access_token);
+	if (isset($this->access_token)) {
+	    // XXX: print_r only for your first convenient,
+	    //      you should store in config.php
+	    print_r($this->access_token);
+	    return true;
+	}
+	return false;
+    }
+
     function authorize($access_token = NULL, $access_secret = NULL) {
 	if (!empty($access_token) && !empty($access_secret)) {
 	    $this->access_token['oauth_token'] = $access_token;
 	    $this->access_token['oauth_token_secret'] = $access_secret;
+	    return true;
 	} else {
-	    $this->params['server_uri'] = $this->baseURL;
-	    $this->params['request_token_uri'] = PLURK_REQUEST_TOKEN_URL;
-	    $this->params['authorize_uri'] = PLURK_AUTHORIZE_URL;
-	    $this->params['access_token_uri'] = PLURK_ACCESS_TOKEN_URL;
-	    try {
-		$response =
-		    OAuthRequester::requestRequestToken($this->consumer_key,
-			0, Null, 'POST', $this->params);
-	    } catch (OAuthException2 $e) {
-		var_dump($e);
-		exit;
-	    }
-	    $this->request_token['oauth_token'] = $response['token'];
-	    $this->request_token['oauth_token_secret'] =
-		$_SESSION['oauth_'.$this->consumer_key]['token_secret'];
-
-	    printf ("Access the following URL to get authorized: \n");
-	    printf ("%s?oauth_token=%s\n", PLURK_AUTHORIZE_URL,
-		$this->request_token['oauth_token']);
-	    $handle = fopen ("php://stdin","r");
-	    $yes_no = "n";
-	    while (!strncmp($yes_no, "n", 1)) {
-		printf("Input the verification number: ");
-		$this->verifier = trim(fgets($handle));
-		printf("Are you sure? (y/N) ");
-		$yes_no = trim(fgets($handle));
-		if (strncmp($yes_no, "y", 1)) $yes_no = "n";
-	    }
-	    fclose($handle);
-
-	    $this->params['oauth_verifier'] = $this->verifier;
-	    $this->params['oauth_token_secret'] =
-		$this->request_token['oauth_token_secret'];
-	    try {
-		OAuthRequester::requestAccessToken($this->consumer_key,
-		    $this->request_token['oauth_token'], 0, 'POST',
-		    $this->params
-		);
-	    } catch (OAuthException2 $e) {
-		var_dump($e);
-		exit;
-	    }
-	    $this->access_token['oauth_token'] =
-		$_SESSION['oauth_'.$this->consumer_key]['token'];
-	    $this->access_token['oauth_token_secret'] =
-		$_SESSION['oauth_'.$this->consumer_key]['token_secret'];
+	    $this->_get_request_token();
+	    $this->_get_verifier();
+	    return $this->_get_access_token();
 	}
     }
 
-    function request($path, $params, $content) {
+    function request($path, $params = null, $content = null) {
 	if (isset($params)) 
 	    $params = array_merge ($params, $this->params);
 	else
@@ -115,8 +106,10 @@ class PlurkOAuth {
 		}
 		$content = implode('&', $content_params);
 	    }
-	    $resp = json_decode($client->request(
-		$this->baseURL.$path, "POST", /*$request->to_header()*/null, $content));
+	    $resp = $client->request(
+		$this->baseURL.$path, "POST", /*$request->to_header()*/null, $content);
+	    if ($json = json_decode($resp))
+		$resp = $json;
 	    if (isset($resp->error_text)) {
 		$this->status = -1;
 		$this->response['body'] = null;

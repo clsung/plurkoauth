@@ -7,8 +7,6 @@
 require('plurkOAuth.php');
 
 class PlurkAPI {
-    protected $consumer_key;
-    protected $consumer_secret;
     protected $_error;
     protected $_oauth;
 
@@ -17,8 +15,6 @@ class PlurkAPI {
 	if (!isset($consumer_key) and !isset($consumer_secret))
 	    throw new InvalidArgumentException("Must specify both consumer key/secret!");
 	$this->_oauth = new PlurkOAuth($consumer_key, $consumer_secret, $access_token, $access_secret);
-	$this->consumer_key = $consumer_key;
-	$this->consumer_secret = $consumer_secret;
 	$this->_error = array (
 	    'content' => null,
 	    'code' => 0,
@@ -26,6 +22,10 @@ class PlurkAPI {
 	);
     }
    
+    function authorize($access_token = null, $access_secret = null) {
+	$this->_oauth->authorize($access_token, $access_secret);
+    }
+
     function callAPI($path, $params_array = null) {
 	$this->_error = $this->_oauth->request($path, null, $params_array);
 	return $this->_error['content'];
