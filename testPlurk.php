@@ -66,4 +66,20 @@ class PlurkAPITest extends PHPUnit_Framework_TestCase {
 	$oauth = new PlurkOAuth($this->consumer_key, $this->consumer_secret);
 	$this->assertTrue($oauth->authorize());
     }
+
+    /**
+     * @depends testValidConsumerKey
+     */
+    public function testAPIplurkAdd()
+    {
+	$plurk = new PlurkAPI($this->consumer_key, $this->consumer_secret,
+	    $this->oauth_token, $this->oauth_token_secret
+	);
+	$json = $plurk->callAPI('/APP/Timeline/plurkAdd',
+	    array ('content' => 'Post by plurkoauth which based on php', 'qualifier' => 'hates')
+	);
+	$this->assertNotNull($json);
+	$this->assertEquals(0, $plurk->errno());
+    }
+
 }  

@@ -210,7 +210,7 @@ class Request
 	$this->params = array();
 	if (isset($params)) {
 	    foreach ($params as $key => $value) {
-		$this->params[urlencode($key)] = urlencode($value);
+		$this->params[$key] = $value;
 	    }
 	}
 	$this->method = $method;

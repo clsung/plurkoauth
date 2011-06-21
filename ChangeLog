@@ -1,4 +1,7 @@
 
+0.2.2
+- fix bug, which translate " " to "+" first then urlencode()
+
 0.2.1
 - finish authorize(null, null), now you can use this to get access_token
 
