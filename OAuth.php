@@ -139,7 +139,7 @@ class Client
 	    throw new PlurkOAuthException("not Token");
 	$this->consumer = $consumer;
 	$this->token = $token;
-	$whis->method = new SignatureMethod_HMAC_SHA1();
+	$this->method = new SignatureMethod_HMAC_SHA1();
     }
 
     function set_signature_method($method) {
