@@ -37,11 +37,11 @@ class PlurkOAuth {
     function _get_request_token() {
         unset($this->token);
         $sapi_type = php_sapi_name();
-        if (substr($sapi_type, 0, 3) == 'cgi') {
+        if (substr($sapi_type, 0, 3) == 'cli') { # cli mode
+            $content = $this->request(PLURK_REQUEST_TOKEN_PATH);
+        } else { # web mode
             $content = $this->request(PLURK_REQUEST_TOKEN_PATH, null, array (
                 'oauth_callback' => CALLBACK_URL));
-        } else { # cli mode
-            $content = $this->request(PLURK_REQUEST_TOKEN_PATH);
         }
 	parse_str($content['content'], $this->request_token);
         setcookie('token', $this->request_token['oauth_token']);
@@ -111,12 +111,12 @@ class PlurkOAuth {
             unset($this->access_token);
 	    $this->_get_request_token();
             $sapi_type = php_sapi_name();
-            if (substr($sapi_type, 0, 3) == 'cgi') {
-                $this->_redirect_to_authorize();
-                return false;
-            } else { # cli mode
+            if (substr($sapi_type, 0, 3) == 'cli') { # cli mode
                 $this->_get_verifier();
                 return $this->_get_access_token();
+            } else { # web mode
+                $this->_redirect_to_authorize();
+                return false;
             }
 	}
     }
