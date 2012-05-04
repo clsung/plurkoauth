@@ -22,8 +22,20 @@ class PlurkAPI {
 	);
     }
    
+    function authorize_with_verifier($verifier = NULL) {
+	$this->_oauth->authorize_with_verifier($verifier);
+    }
+
     function authorize($access_token = null, $access_secret = null) {
 	$this->_oauth->authorize($access_token, $access_secret);
+    }
+
+    function get_access_token() {
+        return $this->_oauth->get_access_token();
+    }
+
+    function get_request_token() {
+        return $this->_oauth->get_request_token();
     }
 
     function callAPI($path, $params_array = null) {

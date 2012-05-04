@@ -35,50 +35,86 @@ class PlurkOAuth {
     }
 
     function _get_request_token() {
-	$content = $this->request(PLURK_REQUEST_TOKEN_PATH);
+        $sapi_type = php_sapi_name();
+        if (substr($sapi_type, 0, 3) == 'cgi') {
+            $content = $this->request(PLURK_REQUEST_TOKEN_PATH, null, array (
+                'oauth_callback' => CALLBACK_URL));
+        } else { # cli mode
+            $content = $this->request(PLURK_REQUEST_TOKEN_PATH);
+        }
 	parse_str($content['content'], $this->request_token);
+        setcookie('token', $this->request_token['oauth_token']);
+        setcookie('secret', $this->request_token['oauth_token_secret']);
+    }
+
+    function _redirect_to_authorize() {
+        printf ('<a href="%s?oauth_token=%s">Get Authorized</a>', $this->baseURL.PLURK_AUTHORIZE_PATH,
+            $this->request_token['oauth_token']);
     }
 
     function _get_verifier() {
-	printf ("Access the following URL to get authorized: \n");
-	printf ("%s?oauth_token=%s\n", $this->baseURL.PLURK_AUTHORIZE_PATH,
-	    $this->request_token['oauth_token']);
-	$handle = fopen ("php://stdin","r");
-	$yes_no = "n";
-	while (!strncmp($yes_no, "n", 1)) {
-	    printf("Input the verification number: ");
-	    $this->verifier = trim(fgets($handle));
-	    printf("Are you sure? (y/N) ");
-	    $yes_no = trim(fgets($handle));
-	    if (strncmp($yes_no, "y", 1)) $yes_no = "n";
-	}
-	fclose($handle);
+        printf ("Access the following URL to get authorized: \n");
+        printf ("%s?oauth_token=%s\n", $this->baseURL.PLURK_AUTHORIZE_PATH,
+            $this->request_token['oauth_token']);
+        $handle = fopen ("php://stdin","r");
+        $yes_no = "n";
+        while (!strncmp($yes_no, "n", 1)) {
+            printf("Input the verification number: ");
+            $this->verifier = trim(fgets($handle));
+            printf("Are you sure? (y/N) ");
+            $yes_no = trim(fgets($handle));
+            if (strncmp($yes_no, "y", 1)) $yes_no = "n";
+        }
+        fclose($handle);
     }
 
     function _get_access_token() {
-	$content = $this->request(PLURK_REQUEST_TOKEN_PATH, array (
-	    'oauth_token_secret' => $this->request_token['oauth_token_secret'],
+	$content = $this->request(PLURK_ACCESS_TOKEN_PATH, null, array (
+            'oauth_token' => $this->request_token['oauth_token'], 
 	    'oauth_verifier' => $this->verifier,)
 	);
 	parse_str($content['content'], $this->access_token);
-	if (isset($this->access_token)) {
+	if (isset($this->access_token['oauth_token'])) {
 	    // XXX: print_r only for your first convenient,
 	    //      you should store in config.php
 	    print_r($this->access_token);
+	    $this->token = new Token(
+		$this->access_token['oauth_token'], 
+		$this->access_token['oauth_token_secret']); 
 	    return true;
 	}
 	return false;
     }
 
+    function authorize_with_verifier($verifier = NULL) {
+        $this->verifier = $verifier;
+        $this->request_token['oauth_token'] = $_COOKIE['token'];
+        $this->request_token['oauth_token_secret'] = $_COOKIE['secret'];
+        $this->token = new Token(
+            $this->request_token['oauth_token'],
+            $this->request_token['oauth_token_secret']);
+        return $this->_get_access_token();
+    }
+
+    function get_access_token() {
+        return $this->access_token;
+    }
+
     function authorize($access_token = NULL, $access_secret = NULL) {
-	if (!empty($access_token) && !empty($access_secret)) {
-	    $this->access_token['oauth_token'] = $access_token;
+        $this->access_token['oauth_token'] = $access_token;
+	if (!empty($access_secret)) {
 	    $this->access_token['oauth_token_secret'] = $access_secret;
 	    return true;
 	} else {
 	    $this->_get_request_token();
-	    $this->_get_verifier();
-	    return $this->_get_access_token();
+            $sapi_type = php_sapi_name();
+            if (substr($sapi_type, 0, 3) == 'cgi') {
+                $this->_redirect_to_authorize();
+                return false;
+            } else { # cli mode
+                $this->_get_verifier();
+                return $this->_get_access_token();
+            }
 	}
     }
 
@@ -87,12 +123,10 @@ class PlurkOAuth {
 	    $params = array_merge ($params, $this->params);
 	else
 	    $params = $this->params;
-	if (isset ($this->access_token))
+	if (isset ($this->access_token['oauth_token']))
 	    $this->token = new Token(
 		$this->access_token['oauth_token'], 
 		$this->access_token['oauth_token_secret']); 
-	else
-	    unset($this->token);
 	$client = new Client($this->consumer, $this->token);
 
 	$this->status = 0;
