@@ -35,6 +35,7 @@ class PlurkOAuth {
     }
 
     function _get_request_token() {
+        unset($this->token);
         $sapi_type = php_sapi_name();
         if (substr($sapi_type, 0, 3) == 'cgi') {
             $content = $this->request(PLURK_REQUEST_TOKEN_PATH, null, array (
@@ -78,6 +79,7 @@ class PlurkOAuth {
 	    // XXX: print_r only for your first convenient,
 	    //      you should store in config.php
 	    print_r($this->access_token);
+            unset($this->token);
 	    $this->token = new Token(
 		$this->access_token['oauth_token'], 
 		$this->access_token['oauth_token_secret']); 
@@ -106,6 +108,7 @@ class PlurkOAuth {
 	    $this->access_token['oauth_token_secret'] = $access_secret;
 	    return true;
 	} else {
+            unset($this->access_token);
 	    $this->_get_request_token();
             $sapi_type = php_sapi_name();
             if (substr($sapi_type, 0, 3) == 'cgi') {
@@ -123,7 +126,8 @@ class PlurkOAuth {
 	    $params = array_merge ($params, $this->params);
 	else
 	    $params = $this->params;
-	if (isset ($this->access_token['oauth_token']))
+        if (isset ($this->access_token['oauth_token']) && 
+            isset ($this->access_token['oauth_token_secret']))
 	    $this->token = new Token(
 		$this->access_token['oauth_token'], 
 		$this->access_token['oauth_token_secret']); 
