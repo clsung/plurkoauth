@@ -4,8 +4,8 @@
  *
  * A demo PHP Library supporting Plurk OAuth API
  */
-require('config.php');
-require('OAuth.php');
+require_once('config.php');
+require_once('OAuth.php');
 
 define('PLURK_ACCESS_TOKEN_PATH', "/OAuth/access_token");
 define('PLURK_AUTHORIZE_PATH', "/OAuth/authorize");

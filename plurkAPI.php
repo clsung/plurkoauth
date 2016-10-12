@@ -4,7 +4,7 @@
  *
  * A demo PHP Library supporting Plurk OAuth API
  */
-require('plurkOAuth.php');
+require_once('plurkOAuth.php');
 
 class PlurkAPI {
     protected $_error;
