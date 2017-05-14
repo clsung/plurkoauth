@@ -5,8 +5,8 @@ PHP Wrapper of Plurk OAuth API
 
 About
 ----
-PlurkOAuth is a php wrapper for [Plurk API 2.0 beta](http://www.plurk.com/API/2)
-You will need to [Sign Up](http://www.plurk.com/PlurkApp/register) for your own CUSTOMER TOKENs.
+PlurkOAuth is a php wrapper for [Plurk API 2.0 beta](https://www.plurk.com/API/2)
+You will need to [Sign Up](https://www.plurk.com/PlurkApp/register) for your own CUSTOMER TOKENs.
 
 Prerequire Packages
 ----

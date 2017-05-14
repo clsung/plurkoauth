@@ -10,8 +10,8 @@ class Request_Test extends PHPUnit_Framework_TestCase
     }
     public function testNormalizedURL() {
 	$request = new Request("POST",
-	    'http://www.plurk.com/OAuth/request_token', null, 'content');
-	$this->assertEquals('http://www.plurk.com/OAuth/request_token',
+	    'https://www.plurk.com/OAuth/request_token', null, 'content');
+	$this->assertEquals('https://www.plurk.com/OAuth/request_token',
 	    $request->normalized_url);
     }
 }
@@ -32,7 +32,7 @@ class SignatureMethod_Test extends PHPUnit_Framework_TestCase
 
     public function testPOSTGetRequestToken() {
 	$request = new Request("POST",
-	    'http://www.plurk.com/OAuth/request_token');
+	    'https://www.plurk.com/OAuth/request_token');
 	$signature_method = new SignatureMethod_HMAC_SHA1();
 	$request->sign_request($signature_method, $this->consumer, $this->token);
 	$header = $request->to_header();
@@ -43,7 +43,7 @@ class SignatureMethod_Test extends PHPUnit_Framework_TestCase
     public function testPOSTGetRequestToken2() {
 	$request = Request::from_consumer_and_token(
 	    $this->consumer, $this->token, "POST",
-	    'http://www.plurk.com/OAuth/request_token');
+	    'https://www.plurk.com/OAuth/request_token');
 	$signature_method = new SignatureMethod_HMAC_SHA1();
 	$request->sign_request($signature_method, $this->consumer, $this->token);
 	$header = $request->to_header();

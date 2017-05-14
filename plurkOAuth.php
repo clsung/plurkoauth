@@ -13,7 +13,7 @@ define('PLURK_REQUEST_TOKEN_PATH', "/OAuth/request_token");
 
 class PlurkOAuth {
 
-    public $baseURL = 'http://www.plurk.com';
+    public $baseURL = 'https://www.plurk.com';
     protected $status;
     protected $response;
     protected $request_token;
